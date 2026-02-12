@@ -59,16 +59,16 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           
-      - name: Install dependencies
+      - name: Install test dependencies
         run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
+          pip install pytest pytest-cov numpy scipy scikit-learn pandas opencv-python-headless
           
       - name: Run tests
         run: |
-          pytest tests/ -v --cov=src --cov-report=xml
+          pytest tests/ -v --tb=short
           
       - name: Upload coverage
+        if: always()
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml
