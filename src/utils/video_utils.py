@@ -13,12 +13,12 @@ def read_video(video_path):
     return frames
 
 
-def save_video(ouput_video_frames, output_video_path, fps=24):
+def save_video(output_video_frames, output_video_path, fps=24):
     """
     Save video frames to a file.
 
     Args:
-        ouput_video_frames: List of video frames
+        output_video_frames: List of video frames
         output_video_path: Path to save the output video
         fps: Frames per second for the output video (default: 24)
     """
@@ -27,8 +27,8 @@ def save_video(ouput_video_frames, output_video_path, fps=24):
         output_video_path,
         fourcc,
         fps,
-        (ouput_video_frames[0].shape[1], ouput_video_frames[0].shape[0]),
+        (output_video_frames[0].shape[1], output_video_frames[0].shape[0]),
     )
-    for frame in ouput_video_frames:
+    for frame in output_video_frames:
         out.write(frame)
     out.release()
