@@ -82,7 +82,20 @@ class CameraMovementEstimator:
         return camera_movement
 
     def draw_camera_movement(self, frames, camera_movement_per_frame):
-        # Modify frames in place - frames are already copies from previous operations
+        """
+        Draw camera movement information on video frames.
+        
+        Note: This method modifies frames in-place for performance. Frames should be
+        copies if the original frames need to be preserved. In the standard pipeline,
+        frames are already copies from draw_annotations().
+        
+        Args:
+            frames: List of video frames (will be modified in-place)
+            camera_movement_per_frame: List of [x, y] camera movement per frame
+            
+        Returns:
+            frames: Same list reference with modifications applied
+        """
 
         for frame_num, frame in enumerate(frames):
             overlay = frame.copy()

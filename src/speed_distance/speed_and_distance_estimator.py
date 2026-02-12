@@ -57,7 +57,20 @@ class SpeedAndDistance_Estimator:
                         ][track_id]
 
     def draw_speed_and_distance(self, frames, tracks):
-        # Modify frames in place - frames are already copies from previous draw operations
+        """
+        Draw speed and distance information on video frames.
+        
+        Note: This method modifies frames in-place for performance. Frames should be
+        copies if the original frames need to be preserved. In the standard pipeline,
+        frames are already copies from draw_annotations().
+        
+        Args:
+            frames: List of video frames (will be modified in-place)
+            tracks: Dictionary of object tracks with speed/distance data
+            
+        Returns:
+            frames: Same list reference with modifications applied
+        """
         for frame_num, frame in enumerate(frames):
             for object, object_tracks in tracks.items():
                 if object == "ball" or object == "referees":
