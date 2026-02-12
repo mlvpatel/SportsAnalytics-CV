@@ -5,7 +5,7 @@
 # ============================================
 # Stage 1: Base with CUDA support
 # ============================================
-FROM nvidia/cuda:12.4-cudnn9-runtime-ubuntu22.04 AS base
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -65,9 +65,9 @@ COPY --chown=app:app . .
 
 # Create necessary directories
 RUN mkdir -p /app/data/input_videos \
-             /app/data/output_videos \
-             /app/models \
-             /app/logs \
+    /app/data/output_videos \
+    /app/models \
+    /app/logs \
     && chown -R app:app /app
 
 # Switch to app user
