@@ -56,10 +56,14 @@ class Tracker:
         detections = self.detect_frames(frames)
 
         tracks = {"players": [], "referees": [], "ball": []}
+        
+        # Cache cls_names_inv outside the loop for efficiency
+        cls_names_inv = None
 
         for frame_num, detection in enumerate(detections):
             cls_names = detection.names
-            cls_names_inv = {v: k for k, v in cls_names.items()}
+            if cls_names_inv is None:
+                cls_names_inv = {v: k for k, v in cls_names.items()}
 
             # Covert to supervision Detection format
             detection_supervision = sv.Detections.from_ultralytics(detection)

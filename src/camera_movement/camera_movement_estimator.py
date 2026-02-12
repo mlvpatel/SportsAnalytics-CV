@@ -44,7 +44,7 @@ class CameraMovementEstimator:
             with open(stub_path, "rb") as f:
                 return pickle.load(f)
 
-        camera_movement = [[0, 0]] * len(frames)
+        camera_movement = [[0, 0] for _ in range(len(frames))]
 
         old_gray = cv2.cvtColor(frames[0], cv2.COLOR_BGR2GRAY)
         old_features = cv2.goodFeaturesToTrack(old_gray, **self.features)
@@ -58,22 +58,26 @@ class CameraMovementEstimator:
             max_distance = 0
             camera_movement_x, camera_movement_y = 0, 0
 
-            for i, (new, old) in enumerate(zip(new_features, old_features)):
-                new_features_point = new.ravel()
-                old_features_point = old.ravel()
-
-                distance = measure_distance(new_features_point, old_features_point)
-                if distance > max_distance:
-                    max_distance = distance
+            # Vectorize distance calculation for better performance
+            if new_features is not None and old_features is not None:
+                new_points = new_features.reshape(-1, 2)
+                old_points = old_features.reshape(-1, 2)
+                
+                # Calculate all distances at once using NumPy
+                distances = np.linalg.norm(new_points - old_points, axis=1)
+                max_idx = np.argmax(distances)
+                max_distance = distances[max_idx]
+                
+                if max_distance > 0:
                     camera_movement_x, camera_movement_y = measure_xy_distance(
-                        old_features_point, new_features_point
+                        old_points[max_idx], new_points[max_idx]
                     )
 
             if max_distance > self.minimum_distance:
                 camera_movement[frame_num] = [camera_movement_x, camera_movement_y]
                 old_features = cv2.goodFeaturesToTrack(frame_gray, **self.features)
 
-            old_gray = frame_gray.copy()
+            old_gray = frame_gray
 
         if stub_path is not None:
             with open(stub_path, "wb") as f:

@@ -1,3 +1,4 @@
+from collections import Counter
 from sklearn.cluster import KMeans
 
 
@@ -36,7 +37,7 @@ class TeamAssigner:
             clustered_image[-1, 0],
             clustered_image[-1, -1],
         ]
-        non_player_cluster = max(set(corner_clusters), key=corner_clusters.count)
+        non_player_cluster = Counter(corner_clusters).most_common(1)[0][0]
         player_cluster = 1 - non_player_cluster
 
         player_color = kmeans.cluster_centers_[player_cluster]

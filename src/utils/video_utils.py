@@ -9,15 +9,24 @@ def read_video(video_path):
         if not ret:
             break
         frames.append(frame)
+    cap.release()
     return frames
 
 
-def save_video(ouput_video_frames, output_video_path):
+def save_video(ouput_video_frames, output_video_path, fps=24):
+    """
+    Save video frames to a file.
+    
+    Args:
+        ouput_video_frames: List of video frames
+        output_video_path: Path to save the output video
+        fps: Frames per second for the output video (default: 24)
+    """
     fourcc = cv2.VideoWriter_fourcc(*"XVID")
     out = cv2.VideoWriter(
         output_video_path,
         fourcc,
-        24,
+        fps,
         (ouput_video_frames[0].shape[1], ouput_video_frames[0].shape[0]),
     )
     for frame in ouput_video_frames:
