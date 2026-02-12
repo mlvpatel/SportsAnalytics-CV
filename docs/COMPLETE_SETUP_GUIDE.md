@@ -1,6 +1,6 @@
 # Complete Setup & Deployment Guide
 
-## SportsVision-AI & RAGFlow
+## SportsAnalytics-CV & RAGFlow
 
 **Author:** Malav Patel  
 **Email:** malav.patel203@gmail.com  
@@ -12,7 +12,7 @@
 ## Table of Contents
 
 1. [Introduction](#1-introduction)
-2. [SportsVision-AI Setup](#2-sportsvision-ai-setup)
+2. [SportsAnalytics-CV Setup](#2-sportsanalytics-cv-setup)
 3. [RAGFlow Setup](#3-ragflow-setup)
 4. [GitHub Upload Guide](#4-github-upload-guide)
 5. [Docker Deployment](#5-docker-deployment)
@@ -30,7 +30,7 @@
 
 This guide provides step-by-step instructions for setting up, deploying, and maintaining two production-grade AI projects:
 
-1. **SportsVision-AI**: Real-time sports analytics using computer vision
+1. **SportsAnalytics-CV**: Real-time sports analytics using computer vision
 2. **RAGFlow**: Document Q&A system with conversational memory
 
 Both projects follow industry best practices including:
@@ -42,7 +42,7 @@ Both projects follow industry best practices including:
 
 ---
 
-## 2. SportsVision-AI Setup
+## 2. SportsAnalytics-CV Setup
 
 ### 2.1 Prerequisites
 
@@ -63,8 +63,8 @@ Both projects follow industry best practices including:
 
 ```bash
 # Step 1: Clone the repository
-git clone https://github.com/mlvpatel/SportsVision-AI.git
-cd SportsVision-AI
+git clone https://github.com/mlvpatel/SportsAnalytics-CV.git
+cd SportsAnalytics-CV
 
 # Step 2: Create virtual environment
 python -m venv venv
@@ -128,7 +128,7 @@ streamlit run app.py --server.port 8501
 After running the analysis, you should see:
 ```
 ==============================================================
-                 SPORTSVISION-AI RESULTS
+                 SPORTSANALYTICS-CV RESULTS
 ==============================================================
   Team 1 Possession: 54.2%
   Team 2 Possession: 45.8%
@@ -229,21 +229,21 @@ print(response.json()["answer"])
 
 ```bash
 # Step 1: Go to github.com and create a new repository
-# Name: SportsVision-AI (or RAGFlow)
+# Name: SportsAnalytics-CV (or RAGFlow)
 # Do NOT initialize with README
 
 # Step 2: Initialize local git
-cd SportsVision-AI  # or RAGFlow
+cd SportsAnalytics-CV  # or RAGFlow
 git init
 
 # Step 3: Add files
 git add .
 
 # Step 4: Create initial commit
-git commit -m "Initial commit: SportsVision-AI v1.0.0"
+git commit -m "Initial commit: SportsAnalytics-CV v1.0.0"
 
 # Step 5: Add remote
-git remote add origin https://github.com/mlvpatel/SportsVision-AI.git
+git remote add origin https://github.com/mlvpatel/SportsAnalytics-CV.git
 
 # Step 6: Push to GitHub
 git branch -M main
@@ -280,9 +280,9 @@ git push origin v1.0.0
 ### 5.1 Building Docker Images
 
 ```bash
-# SportsVision-AI
-cd SportsVision-AI
-docker build -t sportsvision-ai:latest -f docker/Dockerfile .
+# SportsAnalytics-CV
+cd SportsAnalytics-CV
+docker build -t sportsanalytics-cv:latest -f docker/Dockerfile .
 
 # RAGFlow
 cd RAGFlow
@@ -292,11 +292,11 @@ docker build -t ragflow:latest -f docker/Dockerfile .
 ### 5.2 Running with Docker
 
 ```bash
-# SportsVision-AI (with GPU)
+# SportsAnalytics-CV (with GPU)
 docker run --gpus all -p 8000:8000 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/models:/app/models \
-  sportsvision-ai:latest
+  sportsanalytics-cv:latest
 
 # RAGFlow
 docker run -p 8000:8000 -p 8501:8501 \
@@ -338,20 +338,20 @@ Create `k8s/deployment.yaml`:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sportsvision-api
+  name: sportsanalytics-api
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: sportsvision-api
+      app: sportsanalytics-api
   template:
     metadata:
       labels:
-        app: sportsvision-api
+        app: sportsanalytics-api
     spec:
       containers:
       - name: api
-        image: sportsvision-ai:latest
+        image: sportsanalytics-cv:latest
         ports:
         - containerPort: 8000
         resources:
@@ -361,10 +361,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sportsvision-service
+  name: sportsanalytics-service
 spec:
   selector:
-    app: sportsvision-api
+    app: sportsanalytics-api
   ports:
   - port: 80
     targetPort: 8000
@@ -382,10 +382,10 @@ kubectl get pods
 kubectl get services
 
 # View logs
-kubectl logs -f deployment/sportsvision-api
+kubectl logs -f deployment/sportsanalytics-api
 
 # Scale
-kubectl scale deployment sportsvision-api --replicas=3
+kubectl scale deployment sportsanalytics-api --replicas=3
 ```
 
 ---
@@ -466,7 +466,7 @@ Go to Settings > Secrets and add:
 
 ## 9. Future Development Roadmap
 
-### SportsVision-AI
+### SportsAnalytics-CV
 
 | Version | Features | Timeline |
 |---------|----------|----------|
@@ -547,7 +547,7 @@ Go to Settings > Secrets and add:
 
 ### Common Issues
 
-#### SportsVision-AI
+#### SportsAnalytics-CV
 
 ```bash
 # Issue: CUDA out of memory

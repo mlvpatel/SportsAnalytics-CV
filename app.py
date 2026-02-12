@@ -1,5 +1,5 @@
 """
-SportsVision-AI Streamlit Demo
+SportsAnalytics-CV Streamlit Demo
 
 Author: Malav Patel
 """
@@ -10,12 +10,12 @@ import os
 from pathlib import Path
 
 st.set_page_config(
-    page_title="SportsVision-AI",
+    page_title="SportsAnalytics-CV",
     page_icon="SV",
     layout="wide"
 )
 
-st.title("SportsVision-AI")
+st.title("SportsAnalytics-CV")
 st.markdown("**Real-Time Sports Analytics with Computer Vision**")
 
 st.sidebar.header("Configuration")

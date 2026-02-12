@@ -1,4 +1,4 @@
-# SportsVision-AI
+# SportsAnalytics-CV
 
 **Real-Time Sports Analytics with Computer Vision and Deep Learning**
 
@@ -8,7 +8,7 @@
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](docker/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF.svg)](.github/workflows/)
 
-SportsVision-AI is a production-grade computer vision system for real-time sports video analysis. Built on YOLO v8/v11 and OpenCV, it performs player tracking, team classification, ball possession analysis, speed estimation, and generates comprehensive match statistics.
+SportsAnalytics-CV is a production-grade computer vision system for real-time sports video analysis. Built on YOLO v8/v11 and OpenCV, it performs player tracking, team classification, ball possession analysis, speed estimation, and generates comprehensive match statistics.
 
 ---
 
@@ -33,7 +33,7 @@ SportsVision-AI is a production-grade computer vision system for real-time sport
 
 ## Overview
 
-SportsVision-AI transforms raw sports footage into actionable insights through advanced computer vision techniques.
+SportsAnalytics-CV transforms raw sports footage into actionable insights through advanced computer vision techniques.
 
 ### Use Cases
 
@@ -66,7 +66,7 @@ SportsVision-AI transforms raw sports footage into actionable insights through a
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         SportsVision-AI Pipeline                             │
+│                         SportsAnalytics-CV Pipeline                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌──────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
@@ -153,8 +153,8 @@ SportsVision-AI transforms raw sports footage into actionable insights through a
 
 ```bash
 # Clone repository
-git clone https://github.com/mlvpatel/SportsVision-AI.git
-cd SportsVision-AI
+git clone https://github.com/mlvpatel/SportsAnalytics-CV.git
+cd SportsAnalytics-CV
 
 # Create virtual environment
 python -m venv venv
@@ -193,8 +193,8 @@ pip install -r requirements.txt
 ### Method 2: Docker
 
 ```bash
-docker build -t sportsvision-ai:latest -f docker/Dockerfile .
-docker run --gpus all -v $(pwd)/data:/app/data sportsvision-ai:latest
+docker build -t sportsanalytics-cv:latest -f docker/Dockerfile .
+docker run --gpus all -v $(pwd)/data:/app/data sportsanalytics-cv:latest
 ```
 
 ### Method 3: Docker Compose
@@ -223,7 +223,7 @@ python main.py --input video.mp4 --conf 0.6
 ### Python API
 
 ```python
-from sportsvision import SportsAnalyzer
+from sportsanalytics import SportsAnalyzer
 
 # Initialize analyzer
 analyzer = SportsAnalyzer(
@@ -315,8 +315,8 @@ curl -X POST "http://localhost:8000/analyze" \
 ### Docker
 
 ```bash
-docker build -t sportsvision:latest .
-docker run --gpus all -p 8000:8000 sportsvision:latest
+docker build -t sportsanalytics-cv:latest .
+docker run --gpus all -p 8000:8000 sportsanalytics-cv:latest
 ```
 
 ### Kubernetes
@@ -356,7 +356,7 @@ python scripts/train.py --data data/custom_dataset --epochs 100 --model yolov8x
 ## Project Structure
 
 ```
-SportsVision-AI/
+SportsAnalytics-CV/
 ├── src/                          # Source code
 │   ├── trackers/                 # Object tracking (ByteTrack)
 │   ├── team_assigner/            # Team classification (K-Means)
@@ -435,12 +435,12 @@ MIT License - see [LICENSE](LICENSE) file.
 ## Citation
 
 ```bibtex
-@software{sportsvision_ai_2025,
+@software{sportsanalytics_cv_2025,
   author = {Patel, Malav},
-  title = {SportsVision-AI: Real-Time Sports Analytics},
+  title = {SportsAnalytics-CV: Real-Time Sports Analytics},
   year = {2025},
   publisher = {GitHub},
-  url = {https://github.com/mlvpatel/SportsVision-AI}
+  url = {https://github.com/mlvpatel/SportsAnalytics-CV}
 }
 ```
 

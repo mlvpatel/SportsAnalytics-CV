@@ -1,4 +1,4 @@
-# Contributing to SportsVision-AI
+# Contributing to SportsAnalytics-CV
 
 Thank you for your interest in contributing!
 

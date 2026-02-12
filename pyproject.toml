@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sportsvision-ai"
+name = "sportsanalytics-cv"
 version = "1.0.0"
 description = "Real-Time Sports Analytics with Computer Vision and Deep Learning"
 readme = "README.md"
@@ -50,13 +50,13 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/mlvpatel/SportsVision-AI"
-Documentation = "https://github.com/mlvpatel/SportsVision-AI#readme"
-Repository = "https://github.com/mlvpatel/SportsVision-AI"
-Issues = "https://github.com/mlvpatel/SportsVision-AI/issues"
+Homepage = "https://github.com/mlvpatel/SportsAnalytics-CV"
+Documentation = "https://github.com/mlvpatel/SportsAnalytics-CV#readme"
+Repository = "https://github.com/mlvpatel/SportsAnalytics-CV"
+Issues = "https://github.com/mlvpatel/SportsAnalytics-CV/issues"
 
 [project.scripts]
-sportsvision = "main:main"
+sportsanalytics = "main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

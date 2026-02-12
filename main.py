@@ -1,5 +1,5 @@
 """
-SportsVision-AI: Real-Time Sports Analytics with Computer Vision
+SportsAnalytics-CV: Real-Time Sports Analytics with Computer Vision
 
 Main entry point for video analysis pipeline.
 
@@ -35,7 +35,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('sportsvision.log')
+        logging.FileHandler('sportsanalytics.log')
     ]
 )
 logger = logging.getLogger(__name__)
@@ -241,7 +241,7 @@ class SportsAnalyzer:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="SportsVision-AI: Real-Time Sports Analytics"
+        description="SportsAnalytics-CV: Real-Time Sports Analytics"
     )
     
     parser.add_argument(
@@ -305,7 +305,7 @@ def main():
     
     # Print results
     print("\n" + "="*60)
-    print("                 SPORTSVISION-AI RESULTS")
+    print("                 SPORTSANALYTICS-CV RESULTS")
     print("="*60)
     print(f"  Team 1 Possession: {result.team1_possession:.1f}%")
     print(f"  Team 2 Possession: {result.team2_possession:.1f}%")

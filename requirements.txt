@@ -1,4 +1,4 @@
-# SportsVision-AI Requirements
+# SportsAnalytics-CV Requirements
 # Author: Malav Patel
 # Last Updated: February 2026
 

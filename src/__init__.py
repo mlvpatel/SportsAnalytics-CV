@@ -1,5 +1,5 @@
 """
-SportsVision-AI: Real-Time Sports Analytics with Computer Vision
+SportsAnalytics-CV: Real-Time Sports Analytics with Computer Vision
 
 Author: Malav Patel
 Email: malav.patel203@gmail.com

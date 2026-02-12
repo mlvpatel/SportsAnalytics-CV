@@ -1,4 +1,4 @@
-# SportsVision-AI Dockerfile
+# SportsAnalytics-CV Dockerfile
 # Author: Malav Patel
 # Multi-stage build for production deployment
 

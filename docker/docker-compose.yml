@@ -1,4 +1,4 @@
-# SportsVision-AI Docker Compose
+# SportsAnalytics-CV Docker Compose
 # Author: Malav Patel
 # Production-ready multi-service deployment
 
@@ -13,8 +13,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
       target: production
-    image: sportsvision-ai:latest
-    container_name: sportsvision-api
+    image: sportsanalytics-cv:latest
+    container_name: sportsanalytics-api
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -39,7 +39,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - sportsvision-network
+      - sportsanalytics-network
 
   # ============================================
   # Streamlit Demo UI
@@ -49,8 +49,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
       target: production
-    image: sportsvision-ai:latest
-    container_name: sportsvision-streamlit
+    image: sportsanalytics-cv:latest
+    container_name: sportsanalytics-streamlit
     restart: unless-stopped
     command: ["streamlit", "run", "app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
     ports:
@@ -63,28 +63,28 @@ services:
     depends_on:
       - api
     networks:
-      - sportsvision-network
+      - sportsanalytics-network
 
   # ============================================
   # Redis Cache (Optional)
   # ============================================
   redis:
     image: redis:7-alpine
-    container_name: sportsvision-redis
+    container_name: sportsanalytics-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       - redis-data:/data
     networks:
-      - sportsvision-network
+      - sportsanalytics-network
 
   # ============================================
   # Prometheus Monitoring (Optional)
   # ============================================
   prometheus:
     image: prom/prometheus:latest
-    container_name: sportsvision-prometheus
+    container_name: sportsanalytics-prometheus
     restart: unless-stopped
     ports:
       - "9090:9090"
@@ -92,7 +92,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     networks:
-      - sportsvision-network
+      - sportsanalytics-network
     profiles:
       - monitoring
 
@@ -101,7 +101,7 @@ services:
   # ============================================
   grafana:
     image: grafana/grafana:latest
-    container_name: sportsvision-grafana
+    container_name: sportsanalytics-grafana
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -112,12 +112,12 @@ services:
     depends_on:
       - prometheus
     networks:
-      - sportsvision-network
+      - sportsanalytics-network
     profiles:
       - monitoring
 
 networks:
-  sportsvision-network:
+  sportsanalytics-network:
     driver: bridge
 
 volumes:
