@@ -36,13 +36,13 @@ jobs:
           pip install black flake8 isort
           
       - name: Run Black
-        run: black --check --diff src/ tests/
+        run: black --check --diff src/ $([ -d tests ] && echo tests/ || true)
         
       - name: Run Flake8
-        run: flake8 src/ tests/ --max-line-length=100
+        run: flake8 src/ $([ -d tests ] && echo tests/) --max-line-length=100
         
       - name: Run isort
-        run: isort --check-only --diff src/ tests/
+        run: isort --check-only --diff src/ $([ -d tests ] && echo tests/)
 
   # ============================================
   # Unit Tests
