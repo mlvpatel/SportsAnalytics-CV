@@ -3,7 +3,6 @@ import pickle
 
 import cv2
 import numpy as np
-import pandas as pd
 import supervision as sv
 from ultralytics import YOLO
 
@@ -28,13 +27,38 @@ class Tracker:
 
     def interpolate_ball_positions(self, ball_positions):
         ball_positions = [x.get(1, {}).get("bbox", []) for x in ball_positions]
-        df_ball_positions = pd.DataFrame(ball_positions, columns=["x1", "y1", "x2", "y2"])
-
-        # Interpolate missing values
-        df_ball_positions = df_ball_positions.interpolate()
-        df_ball_positions = df_ball_positions.bfill()
-
-        ball_positions = [{1: {"bbox": x}} for x in df_ball_positions.to_numpy().tolist()]
+        
+        # Convert to numpy array for efficient processing
+        # Replace empty lists with NaN values
+        ball_positions_filled = []
+        for pos in ball_positions:
+            if len(pos) == 4:
+                ball_positions_filled.append(pos)
+            else:
+                ball_positions_filled.append([np.nan, np.nan, np.nan, np.nan])
+        
+        ball_positions_array = np.array(ball_positions_filled, dtype=float)
+        
+        # Interpolate missing values using numpy
+        for col in range(ball_positions_array.shape[1]):
+            col_data = ball_positions_array[:, col]
+            # Find indices where we have valid data
+            valid_indices = np.where(~np.isnan(col_data))[0]
+            
+            if len(valid_indices) > 1:
+                # Interpolate using numpy.interp
+                all_indices = np.arange(len(col_data))
+                ball_positions_array[:, col] = np.interp(
+                    all_indices,
+                    valid_indices,
+                    col_data[valid_indices]
+                )
+            elif len(valid_indices) == 1:
+                # If only one valid value, fill all with that value (backward fill)
+                ball_positions_array[:, col] = col_data[valid_indices[0]]
+        
+        # Convert back to list format
+        ball_positions = [{1: {"bbox": row.tolist()}} for row in ball_positions_array]
 
         return ball_positions
 

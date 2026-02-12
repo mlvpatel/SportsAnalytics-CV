@@ -20,7 +20,7 @@ import json
 import cv2
 import numpy as np
 
-from src.utils import read_video, save_video
+from src.utils import get_video_properties, read_video, save_video
 from src.trackers import Tracker
 from src.team_assigner import TeamAssigner
 from src.player_ball_assigner import PlayerBallAssigner
@@ -126,6 +126,11 @@ class SportsAnalyzer:
         start_time = time.time()
         logger.info(f"Starting analysis: {video_path}")
         
+        # Get video properties (frame rate, dimensions, etc.)
+        video_props = get_video_properties(video_path)
+        video_fps = video_props['fps']
+        logger.info(f"Video properties: {video_props['width']}x{video_props['height']} @ {video_fps:.2f} fps")
+        
         # Read video
         video_frames = read_video(video_path)
         total_frames = len(video_frames)
@@ -157,8 +162,8 @@ class SportsAnalyzer:
         # Interpolate ball positions
         tracks["ball"] = self.tracker.interpolate_ball_positions(tracks["ball"])
         
-        # Speed and distance estimation
-        speed_estimator = SpeedAndDistance_Estimator()
+        # Speed and distance estimation (using detected frame rate)
+        speed_estimator = SpeedAndDistance_Estimator(frame_rate=video_fps)
         speed_estimator.add_speed_and_distance_to_tracks(tracks)
         
         # Team assignment
@@ -213,7 +218,7 @@ class SportsAnalyzer:
                 output_frames, camera_movement
             )
             speed_estimator.draw_speed_and_distance(output_frames, tracks)
-            save_video(output_frames, output_path)
+            save_video(output_frames, output_path, fps=video_fps)
             logger.info(f"Output saved: {output_path}")
         
         # Calculate processing metrics

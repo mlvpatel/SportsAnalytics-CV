@@ -4,9 +4,16 @@ from src.utils import get_foot_position, measure_distance
 
 
 class SpeedAndDistance_Estimator:
-    def __init__(self):
+    def __init__(self, frame_rate=24):
+        """
+        Initialize the speed and distance estimator.
+        
+        Args:
+            frame_rate: Video frame rate in fps. Defaults to 24 if not specified.
+                       Should be detected from the video for accurate calculations.
+        """
         self.frame_window = 5
-        self.frame_rate = 24
+        self.frame_rate = frame_rate
 
     def add_speed_and_distance_to_tracks(self, tracks):
         total_distance = {}
@@ -50,7 +57,7 @@ class SpeedAndDistance_Estimator:
                         ][track_id]
 
     def draw_speed_and_distance(self, frames, tracks):
-        output_frames = []
+        # Modify frames in place - frames are already copies from previous draw operations
         for frame_num, frame in enumerate(frames):
             for object, object_tracks in tracks.items():
                 if object == "ball" or object == "referees":
@@ -86,6 +93,5 @@ class SpeedAndDistance_Estimator:
                             (0, 0, 0),
                             2,
                         )
-            output_frames.append(frame)
 
-        return output_frames
+        return frames
