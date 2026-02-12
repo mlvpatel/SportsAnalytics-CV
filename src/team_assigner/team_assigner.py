@@ -5,7 +5,10 @@ class TeamAssigner:
     def __init__(self):
         self.team_colors = {}
         self.player_team_dict = {}
-        self.player_color_cache = {}  # Cache player colors to avoid redundant K-means
+        # Cache player colors to avoid redundant K-means clustering
+        # Assumes player jersey colors remain constant throughout video
+        # (valid for most sports videos with consistent lighting)
+        self.player_color_cache = {}
 
     def get_clustering_model(self, image):
         # Reshape the image to 2D array

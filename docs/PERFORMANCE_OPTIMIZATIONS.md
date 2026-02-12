@@ -20,6 +20,11 @@ The following optimizations have been implemented to reduce computational overhe
 
 **Impact:** ~40% reduction in team assignment processing time for typical videos
 
+**Assumptions:**
+- Player jersey colors remain relatively constant throughout the video
+- Standard lighting conditions (no dramatic lighting changes)
+- Players don't change jerseys mid-game (valid for most sports)
+
 ```python
 # Before: K-means runs every time
 player_color = self.get_player_color(frame, player_bbox)
@@ -67,7 +72,9 @@ max_distance = distances[max_idx]
 
 **Solution:** 
 - Pre-compute `cls_names_inv` once before frame loop
-- Reuse the mapping across all frames
+- Reuse the mapping across all frames (YOLO models have consistent class names)
+
+**Assumption:** Class names remain constant across all frames (standard YOLO behavior)
 
 **Impact:** Eliminates redundant dictionary operations, ~5-10% speedup in tracking
 
@@ -76,7 +83,7 @@ max_distance = distances[max_idx]
 for frame_num, detection in enumerate(detections):
     cls_names_inv = {v: k for k, v in cls_names.items()}  # Redundant!
     
-# After: Created once
+# After: Created once (YOLO models have consistent classes)
 cls_names_inv = None
 for frame_num, detection in enumerate(detections):
     if cls_names_inv is None:
@@ -90,8 +97,11 @@ for frame_num, detection in enumerate(detections):
 
 **Solution:**
 - Check if speed data already exists before writing
-- Only update distance field for already-processed frames
+- Speed is set from first window calculation (most accurate with full frame_window data)
+- Distance is updated cumulatively as it changes
 - Reduces redundant dictionary writes
+
+**Design Note:** Speed remains constant from first calculation within each window, while distance accumulates. This provides stable speed measurements while tracking cumulative distance accurately.
 
 **Impact:** ~15% reduction in speed/distance processing time
 
@@ -99,11 +109,11 @@ for frame_num, detection in enumerate(detections):
 # Before: Overwrites every time
 tracks[object][frame_num_batch][track_id]["speed"] = speed_km_per_hour
 
-# After: Write once, update distance only
+# After: Set speed once, update distance cumulatively
 if "speed" not in tracks[object][frame_num_batch][track_id]:
     tracks[object][frame_num_batch][track_id]["speed"] = speed_km_per_hour
 else:
-    # Update distance but keep speed from first calculation
+    # Update cumulative distance while preserving initial speed calculation
     tracks[object][frame_num_batch][track_id]["distance"] = total_distance[object][track_id]
 ```
 
