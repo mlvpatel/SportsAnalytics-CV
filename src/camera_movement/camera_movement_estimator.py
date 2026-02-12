@@ -44,7 +44,7 @@ class CameraMovementEstimator:
             with open(stub_path, "rb") as f:
                 return pickle.load(f)
 
-        camera_movement = [[0, 0]] * len(frames)
+        camera_movement = [[0, 0] for _ in range(len(frames))]
 
         old_gray = cv2.cvtColor(frames[0], cv2.COLOR_BGR2GRAY)
         old_features = cv2.goodFeaturesToTrack(old_gray, **self.features)
@@ -55,21 +55,17 @@ class CameraMovementEstimator:
                 old_gray, frame_gray, old_features, None, **self.lk_params
             )
 
-            max_distance = 0
-            camera_movement_x, camera_movement_y = 0, 0
-
-            for i, (new, old) in enumerate(zip(new_features, old_features)):
-                new_features_point = new.ravel()
-                old_features_point = old.ravel()
-
-                distance = measure_distance(new_features_point, old_features_point)
-                if distance > max_distance:
-                    max_distance = distance
-                    camera_movement_x, camera_movement_y = measure_xy_distance(
-                        old_features_point, new_features_point
-                    )
+            # Optimized: vectorized distance calculation
+            distances = np.linalg.norm(new_features - old_features, axis=2).flatten()
+            max_idx = np.argmax(distances)
+            max_distance = distances[max_idx]
 
             if max_distance > self.minimum_distance:
+                new_features_point = new_features[max_idx].ravel()
+                old_features_point = old_features[max_idx].ravel()
+                camera_movement_x, camera_movement_y = measure_xy_distance(
+                    old_features_point, new_features_point
+                )
                 camera_movement[frame_num] = [camera_movement_x, camera_movement_y]
                 old_features = cv2.goodFeaturesToTrack(frame_gray, **self.features)
 

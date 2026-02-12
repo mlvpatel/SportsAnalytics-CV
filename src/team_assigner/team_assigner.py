@@ -5,6 +5,7 @@ class TeamAssigner:
     def __init__(self):
         self.team_colors = {}
         self.player_team_dict = {}
+        self.player_color_cache = {}  # Cache player colors to avoid redundant K-means
 
     def get_clustering_model(self, image):
         # Reshape the image to 2D array
@@ -62,7 +63,12 @@ class TeamAssigner:
         if player_id in self.player_team_dict:
             return self.player_team_dict[player_id]
 
-        player_color = self.get_player_color(frame, player_bbox)
+        # Use cached color if available
+        if player_id in self.player_color_cache:
+            player_color = self.player_color_cache[player_id]
+        else:
+            player_color = self.get_player_color(frame, player_bbox)
+            self.player_color_cache[player_id] = player_color
 
         team_id = self.kmeans.predict(player_color.reshape(1, -1))[0]
         team_id += 1

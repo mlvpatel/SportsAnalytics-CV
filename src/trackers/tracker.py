@@ -56,10 +56,16 @@ class Tracker:
         detections = self.detect_frames(frames)
 
         tracks = {"players": [], "referees": [], "ball": []}
+        
+        # Pre-compute class name inverse mapping once (performance optimization)
+        cls_names_inv = None
 
         for frame_num, detection in enumerate(detections):
             cls_names = detection.names
-            cls_names_inv = {v: k for k, v in cls_names.items()}
+            
+            # Create inverse mapping only once
+            if cls_names_inv is None:
+                cls_names_inv = {v: k for k, v in cls_names.items()}
 
             # Covert to supervision Detection format
             detection_supervision = sv.Detections.from_ultralytics(detection)
