@@ -41,13 +41,23 @@ class SpeedAndDistance_Estimator:
 
                     total_distance[object][track_id] += distance_covered
 
+                    # Optimized: reduce redundant writes in overlapping windows
+                    # Speed is set from first window calculation (most accurate with full frame_window data)
+                    # Distance is updated cumulatively as it changes
                     for frame_num_batch in range(frame_num, last_frame):
                         if track_id not in tracks[object][frame_num_batch]:
                             continue
-                        tracks[object][frame_num_batch][track_id]["speed"] = speed_km_per_hour
-                        tracks[object][frame_num_batch][track_id]["distance"] = total_distance[
-                            object
-                        ][track_id]
+                        # Set speed on first calculation
+                        if "speed" not in tracks[object][frame_num_batch][track_id]:
+                            tracks[object][frame_num_batch][track_id]["speed"] = speed_km_per_hour
+                            tracks[object][frame_num_batch][track_id]["distance"] = total_distance[
+                                object
+                            ][track_id]
+                        else:
+                            # Update cumulative distance while preserving initial speed calculation
+                            tracks[object][frame_num_batch][track_id]["distance"] = total_distance[
+                                object
+                            ][track_id]
 
     def draw_speed_and_distance(self, frames, tracks):
         output_frames = []
