@@ -16,7 +16,7 @@ def read_video(video_path):
 def save_video(ouput_video_frames, output_video_path, fps=24):
     """
     Save video frames to a file.
-    
+
     Args:
         ouput_video_frames: List of video frames
         output_video_path: Path to save the output video

@@ -56,7 +56,7 @@ class Tracker:
         detections = self.detect_frames(frames)
 
         tracks = {"players": [], "referees": [], "ball": []}
-        
+
         # Cache cls_names_inv outside the loop for efficiency
         cls_names_inv = None
 
@@ -176,7 +176,7 @@ class Tracker:
         # Get the number of time each team had ball control
         team_1_num_frames = team_ball_control_till_frame[team_ball_control_till_frame == 1].shape[0]
         team_2_num_frames = team_ball_control_till_frame[team_ball_control_till_frame == 2].shape[0]
-        
+
         total_frames = team_1_num_frames + team_2_num_frames
         if total_frames > 0:
             team_1 = team_1_num_frames / total_frames

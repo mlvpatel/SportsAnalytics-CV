@@ -4,7 +4,7 @@ import pickle
 import cv2
 import numpy as np
 
-from src.utils import measure_distance, measure_xy_distance
+from src.utils import measure_xy_distance
 
 
 class CameraMovementEstimator:
@@ -62,12 +62,12 @@ class CameraMovementEstimator:
             if new_features is not None and old_features is not None:
                 new_points = new_features.reshape(-1, 2)
                 old_points = old_features.reshape(-1, 2)
-                
+
                 # Calculate all distances at once using NumPy
                 distances = np.linalg.norm(new_points - old_points, axis=1)
                 max_idx = np.argmax(distances)
                 max_distance = distances[max_idx]
-                
+
                 if max_distance > 0:
                     camera_movement_x, camera_movement_y = measure_xy_distance(
                         old_points[max_idx], new_points[max_idx]
