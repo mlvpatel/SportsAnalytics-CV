@@ -13,14 +13,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive \
     TZ=UTC
 
-# Install system dependencies
+# Install system dependencies and Python 3.11 (available in Ubuntu 22.04 repos)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y --no-install-recommends \
-    python3.12 \
-    python3.12-venv \
-    python3.12-distutils \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
+    python3-pip \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
@@ -45,7 +43,7 @@ WORKDIR /build
 COPY requirements.txt .
 
 # Create virtual environment and install dependencies
-RUN python3.12 -m venv /opt/venv
+RUN python3.11 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN pip install --no-cache-dir --upgrade pip wheel setuptools \
