@@ -5,4 +5,4 @@ from .bbox_utils import (  # noqa: F401
     measure_distance,
     measure_xy_distance,
 )
-from .video_utils import read_video, save_video  # noqa: F401
+from .video_utils import get_video_properties, read_video, save_video  # noqa: F401
