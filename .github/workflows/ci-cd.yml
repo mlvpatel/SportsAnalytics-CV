@@ -101,14 +101,14 @@ jobs:
 
       - name: Upload coverage report
         if: always() && matrix.python-version == '3.11'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: coverage.xml
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-results-${{ matrix.python-version }}
           path: junit.xml
