@@ -2,7 +2,7 @@
 
 **Real-Time Sports Analytics with Computer Vision and Deep Learning**
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![YOLO v8/v11](https://img.shields.io/badge/YOLO-v8%2Fv11-orange.svg)](https://ultralytics.com/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](docker/)
@@ -24,7 +24,6 @@ SportsAnalytics-CV is a production-grade computer vision system for real-time sp
 - [Performance](#performance)
 - [Deployment](#deployment)
 - [Datasets](#datasets)
-- [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 - [Author](#author)
@@ -64,79 +63,115 @@ SportsAnalytics-CV transforms raw sports footage into actionable insights throug
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         SportsAnalytics-CV Pipeline                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌──────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
-│  │  Video   │───▶│  YOLO v8/v11 │───▶│  ByteTrack   │───▶│    Team      │   │
-│  │  Input   │    │  Detection   │    │  Tracker     │    │  Classifier  │   │
-│  └──────────┘    └──────────────┘    └──────────────┘    └──────────────┘   │
-│                                              │                    │          │
-│                                              ▼                    ▼          │
-│  ┌──────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
-│  │ Annotated│◀───│   Metrics    │◀───│    Ball      │◀───│   Speed &    │   │
-│  │  Output  │    │   Overlay    │    │  Possession  │    │   Distance   │   │
-│  └──────────┘    └──────────────┘    └──────────────┘    └──────────────┘   │
-│                                              ▲                    ▲          │
-│                                              │                    │          │
-│                         ┌────────────────────┴────────────────────┘          │
-│                         │                                                    │
-│                  ┌──────┴──────┐              ┌──────────────┐               │
-│                  │   Camera    │              │     View     │               │
-│                  │  Movement   │              │  Transformer │               │
-│                  └─────────────┘              └──────────────┘               │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+### Analysis Pipeline
+
+```mermaid
+flowchart LR
+    A["🎥 Video Input"] --> B["YOLO v8/v11\nObject Detection"]
+    B --> C["ByteTrack\nMulti-Object Tracker"]
+    C --> D["Team Classifier\nK-Means Clustering"]
+    C --> E["Camera Movement\nOptical Flow"]
+    E --> F["View Transformer\nPerspective Warp"]
+    D --> G["Ball Possession\nAnalysis"]
+    F --> H["Speed & Distance\nEstimation"]
+    G --> I["Metrics Overlay\n& Annotation"]
+    H --> I
+    I --> J["📹 Annotated Video"]
+    I --> K["📊 JSON Stats"]
+    I --> L["🌐 API Response"]
 ```
 
-### Component Flow Diagram
+### Data Flow — Layer by Layer
 
+```mermaid
+flowchart TD
+    subgraph INPUT["Input Layer"]
+        V["Video Frames"]
+    end
+
+    subgraph DETECT["Detection Layer — YOLO v8/v11"]
+        D1["Players"] & D2["Ball"] & D3["Referees"]
+    end
+
+    subgraph TRACK["Tracking Layer — ByteTrack"]
+        T1["Multi-Object\nTracking"] --> T2["Ball\nInterpolation"]
+        T1 --> T3["Position\nHistory"]
+    end
+
+    subgraph CORRECT["Correction Layer"]
+        C1["Camera Movement\nEstimation"] --> C2["View\nTransformer"]
+    end
+
+    subgraph ANALYZE["Analysis Layer"]
+        A1["Team Assignment\nK-Means"] --> A2["Ball Possession\nTracking"]
+        A3["Speed & Distance\nCalculation"]
+    end
+
+    subgraph OUTPUT["Output Layer"]
+        O1["Annotated Video"]
+        O2["JSON Statistics"]
+        O3["REST API"]
+    end
+
+    V --> D1 & D2 & D3
+    D1 & D2 & D3 --> T1
+    T3 --> C1
+    C2 --> A3
+    T2 --> A2
+    T1 --> A1
+    A1 & A2 & A3 --> O1 & O2 & O3
 ```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                              DATA FLOW                                      │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   VIDEO INPUT                                                               │
-│       │                                                                     │
-│       ▼                                                                     │
-│   ┌───────────────────────────────────────────────────────────────┐        │
-│   │                    DETECTION LAYER                             │        │
-│   │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │        │
-│   │  │   Players   │  │    Ball     │  │  Referees   │            │        │
-│   │  │  Detection  │  │  Detection  │  │  Detection  │            │        │
-│   │  └─────────────┘  └─────────────┘  └─────────────┘            │        │
-│   └───────────────────────────────────────────────────────────────┘        │
-│       │                                                                     │
-│       ▼                                                                     │
-│   ┌───────────────────────────────────────────────────────────────┐        │
-│   │                    TRACKING LAYER                              │        │
-│   │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │        │
-│   │  │  ByteTrack  │  │    Ball     │  │   Position  │            │        │
-│   │  │   Multi-Obj │  │ Interpolate │  │   History   │            │        │
-│   │  └─────────────┘  └─────────────┘  └─────────────┘            │        │
-│   └───────────────────────────────────────────────────────────────┘        │
-│       │                                                                     │
-│       ▼                                                                     │
-│   ┌───────────────────────────────────────────────────────────────┐        │
-│   │                   ANALYSIS LAYER                               │        │
-│   │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │        │
-│   │  │    Team     │  │    Ball     │  │   Speed &   │            │        │
-│   │  │ Assignment  │  │ Possession  │  │  Distance   │            │        │
-│   │  └─────────────┘  └─────────────┘  └─────────────┘            │        │
-│   └───────────────────────────────────────────────────────────────┘        │
-│       │                                                                     │
-│       ▼                                                                     │
-│   ┌───────────────────────────────────────────────────────────────┐        │
-│   │                    OUTPUT LAYER                                │        │
-│   │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │        │
-│   │  │  Annotated  │  │    JSON     │  │    API      │            │        │
-│   │  │   Video     │  │   Stats     │  │  Response   │            │        │
-│   │  └─────────────┘  └─────────────┘  └─────────────┘            │        │
-│   └───────────────────────────────────────────────────────────────┘        │
-│                                                                             │
-└────────────────────────────────────────────────────────────────────────────┘
+
+### Deployment Architecture
+
+```mermaid
+flowchart TD
+    subgraph DOCKER["Docker Compose"]
+        API["FastAPI\n:8000"] --> REDIS["Redis\nJob Queue"]
+        UI["Streamlit\n:8501"] --> API
+        PROM["Prometheus\n:9090"] --> API
+        GRAF["Grafana\n:3000"] --> PROM
+    end
+
+    subgraph CI["GitHub Actions CI/CD"]
+        LINT["Lint\nblack · flake8 · isort"] --> TEST
+        TEST["Test Matrix\nPython 3.10–3.12"] --> SEC
+        SEC["Security\npip-audit · CodeQL"] --> BUILD
+        BUILD["Docker Build\n& Push"]
+    end
+
+    DEV["Developer"] -->|"git push"| CI
+    CI -->|"deploy"| DOCKER
+    CLIENT["Client / Browser"] --> UI
+    CLIENT --> API
+```
+
+### Tech Stack
+
+```mermaid
+mindmap
+  root((SportsAnalytics-CV))
+    Computer Vision
+      YOLO v8/v11
+      OpenCV
+      ByteTrack
+    Machine Learning
+      PyTorch
+      scikit-learn
+      NumPy
+    API & UI
+      FastAPI
+      Streamlit
+      Pydantic
+    DevOps
+      Docker
+      GitHub Actions
+      Dependabot
+    Quality
+      pytest
+      black
+      flake8
+      CodeQL
 ```
 
 ---
@@ -145,7 +180,7 @@ SportsAnalytics-CV transforms raw sports footage into actionable insights throug
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.10+
 - CUDA-capable GPU (recommended)
 - 8GB+ RAM
 
@@ -223,7 +258,7 @@ python main.py --input video.mp4 --conf 0.6
 ### Python API
 
 ```python
-from sportsanalytics import SportsAnalyzer
+from main import SportsAnalyzer
 
 # Initialize analyzer
 analyzer = SportsAnalyzer(
@@ -255,9 +290,10 @@ streamlit run app.py --server.port 8501
 # Start API server
 uvicorn src.api.main:app --reload --port 8000
 
-# Upload and analyze video
+# Submit a video for analysis
 curl -X POST "http://localhost:8000/analyze" \
-  -F "file=@match.mp4"
+  -H "Content-Type: application/json" \
+  -d '{"video_path": "data/input_videos/match.mp4"}'
 ```
 
 ---
@@ -268,9 +304,9 @@ curl -X POST "http://localhost:8000/analyze" \
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/analyze` | POST | Analyze uploaded video |
+| `/analyze` | POST | Submit video for analysis |
 | `/status/{job_id}` | GET | Get analysis status |
-| `/results/{job_id}` | GET | Get analysis results |
+| `/jobs/{job_id}` | DELETE | Delete completed job |
 | `/health` | GET | Health check |
 
 ### Response Schema
@@ -361,48 +397,33 @@ SportsAnalytics-CV/
 │   ├── trackers/                 # Object tracking (ByteTrack)
 │   ├── team_assigner/            # Team classification (K-Means)
 │   ├── player_ball_assigner/     # Ball possession logic
-│   ├── camera_movement/          # Camera compensation
+│   ├── camera_movement/          # Camera compensation (optical flow)
 │   ├── view_transformer/         # Perspective transform
-│   ├── speed_distance/           # Metrics calculation
-│   ├── utils/                    # Utility functions
-│   └── api/                      # FastAPI backend
-├── models/                       # Pre-trained models
-├── data/                         # Input/output data
+│   ├── speed_distance/           # Speed & distance estimation
+│   ├── utils/                    # Config, video I/O, bbox helpers
+│   └── api/                      # FastAPI REST backend
+├── tests/                        # 71+ unit tests (pytest)
+├── docker/                       # Dockerfile & docker-compose.yml
+├── .github/                      # CI/CD, Dependabot, CodeQL, templates
+├── models/                       # Pre-trained YOLO weights
+├── stubs/                        # Cached tracking data for fast re-runs
+├── data/                         # Input/output videos & sample frames
 ├── notebooks/                    # Jupyter notebooks
-├── tests/                        # Unit tests
-├── docker/                       # Docker configuration
-├── docs/                         # Documentation
-├── configs/                      # Configuration files
-├── scripts/                      # Utility scripts
-├── .github/workflows/            # CI/CD pipelines
-├── main.py                       # Main entry point
-├── app.py                        # Streamlit demo
-├── requirements.txt              # Dependencies
+├── docs/                         # Extended documentation
+├── configs/                      # YAML configuration files
+├── scripts/                      # Utility scripts (model download)
+├── main.py                       # CLI entry point
+├── app.py                        # Streamlit demo UI
+├── pyproject.toml                # Tool config (black, isort, pytest)
+├── requirements.txt              # Production dependencies
+├── requirements-dev.txt          # Dev/test dependencies
+├── Makefile                      # lint, format, test, docker shortcuts
+├── SECURITY.md                   # Vulnerability reporting policy
+├── CHANGELOG.md                  # Version history
+├── CONTRIBUTING.md               # Contribution guide
+├── LICENSE                       # MIT License
 └── README.md                     # This file
 ```
-
----
-
-## Roadmap
-
-### v1.0 (Current)
-- [x] Multi-object tracking
-- [x] Team classification
-- [x] Ball possession tracking
-- [x] Speed and distance estimation
-- [x] Video annotation
-
-### v1.5 (Q2 2026)
-- [ ] Real-time streaming (RTSP/WebRTC)
-- [ ] Multi-camera support
-- [ ] Event detection (goals, fouls)
-- [ ] Heat map generation
-
-### v2.0 (Q4 2026)
-- [ ] Multi-sport support (basketball, hockey)
-- [ ] Pose estimation integration
-- [ ] Predictive analytics
-- [ ] Mobile deployment
 
 ---
 
@@ -435,10 +456,10 @@ MIT License - see [LICENSE](LICENSE) file.
 ## Citation
 
 ```bibtex
-@software{sportsanalytics_cv_2025,
+@software{sportsanalytics_cv_2026,
   author = {Patel, Malav},
   title = {SportsAnalytics-CV: Real-Time Sports Analytics},
-  year = {2025},
+  year = {2026},
   publisher = {GitHub},
   url = {https://github.com/mlvpatel/SportsAnalytics-CV}
 }

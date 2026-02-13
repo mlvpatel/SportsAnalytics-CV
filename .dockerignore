@@ -1,0 +1,15 @@
+# Docker ignore for SportsAnalytics-CV
+.git/
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+stubs/
+notebooks/
+*.pkl
+*.log
+.env
+.DS_Store
+docs/
+*.md
+!requirements.txt

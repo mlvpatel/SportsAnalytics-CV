@@ -1,0 +1,28 @@
+# SportsAnalytics-CV Configuration
+# Author: Malav Patel
+
+model:
+  path: "models/best.pt"
+  confidence: 0.5
+  device: "cuda"
+
+tracking:
+  max_player_ball_distance: 70
+  ball_interpolation: true
+  detection_batch_size: 20
+
+speed:
+  frame_window: 5
+  frame_rate: 24
+
+camera:
+  minimum_distance: 5
+
+court:
+  width: 68.0
+  length: 23.32
+
+output:
+  video_codec: "XVID"
+  log_level: "INFO"
+  log_file: "sportsanalytics.log"

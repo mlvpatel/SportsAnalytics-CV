@@ -1,80 +1,51 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "sportsanalytics-cv"
-version = "1.0.0"
-description = "Real-Time Sports Analytics with Computer Vision and Deep Learning"
+version = "1.1.0"
+description = "Real-time sports video analytics with computer vision"
 readme = "README.md"
-license = {file = "LICENSE"}
-requires-python = ">=3.11"
+license = {text = "MIT"}
+requires-python = ">=3.10"
 authors = [
-    {name = "Malav Patel", email = "malav.patel203@gmail.com"}
+    {name = "Malav Patel", email = "malav.patel203@gmail.com"},
 ]
-keywords = [
-    "computer-vision", "sports-analytics", "yolo", "object-tracking",
-    "deep-learning", "opencv", "football", "soccer", "player-tracking"
-]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Scientific/Engineering :: Image Recognition",
-]
-
-dependencies = [
-    "ultralytics>=8.4.0",
-    "numpy>=2.4.0",
-    "opencv-python>=4.13.0",
-    "pandas>=3.0.0",
-    "scikit-learn>=1.7.0",
-    "supervision>=0.27.0",
-    "torch>=2.10.0",
-]
-
-[project.optional-dependencies]
-api = ["fastapi>=0.128.0", "uvicorn>=0.40.0"]
-demo = ["streamlit>=1.54.0", "plotly>=6.5.0"]
-dev = ["pytest>=9.0.0", "pytest-cov>=6.1.0", "black>=26.1.0", "flake8>=7.3.0"]
-all = [
-    "fastapi>=0.128.0", "uvicorn>=0.40.0",
-    "streamlit>=1.54.0", "plotly>=6.5.0"
-]
-
-[project.urls]
-Homepage = "https://github.com/mlvpatel/SportsAnalytics-CV"
-Documentation = "https://github.com/mlvpatel/SportsAnalytics-CV#readme"
-Repository = "https://github.com/mlvpatel/SportsAnalytics-CV"
-Issues = "https://github.com/mlvpatel/SportsAnalytics-CV/issues"
-
-[project.scripts]
-sportsanalytics = "main:main"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["src*"]
 
 [tool.black]
 line-length = 100
-target-version = ['py311']
+target-version = ["py310", "py311", "py312"]
 
 [tool.isort]
 profile = "black"
 line_length = 100
-
-[tool.flake8]
-max-line-length = 100
-extend-ignore = ["E203", "W503"]
+known_first_party = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gpu: marks tests that require GPU dependencies",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "src/api/__init__.py",
+    "src/*/__init__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+fail_under = 40
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+]

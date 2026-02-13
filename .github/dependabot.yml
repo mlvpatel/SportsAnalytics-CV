@@ -1,0 +1,36 @@
+# Dependabot configuration
+# https://docs.github.com/en/code-security/dependabot
+
+version: 2
+
+updates:
+  # Python pip dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "mlvpatel"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # GitHub Actions versions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "mlvpatel"
+    labels:
+      - "ci/cd"
+      - "automated"
+    commit-message:
+      prefix: "ci"

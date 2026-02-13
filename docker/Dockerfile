@@ -97,6 +97,7 @@ RUN pip install --no-cache-dir \
     pytest-cov \
     black \
     flake8 \
+    isort \
     jupyter
 
 USER app

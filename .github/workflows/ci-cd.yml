@@ -25,79 +25,119 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          
-      - name: Install dependencies
-        run: |
-          pip install black flake8 isort
-          
+          cache: pip
+
+      - name: Install linters
+        run: pip install black flake8 isort
+
       - name: Run Black
-        run: black --check --diff src/
-        
+        run: black --check --diff src/ tests/ main.py
+
       - name: Run Flake8
-        run: flake8 src/ --max-line-length=100
-        
+        run: flake8 src/ tests/ main.py
+
       - name: Run isort
-        run: isort --check-only --diff src/
+        run: isort --check-only --diff src/ tests/ main.py
+
+  # ============================================
+  # Security Scan
+  # ============================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Run pip-audit
+        run: pip-audit -r requirements.txt --ignore-vuln PYSEC-2024-* || true
 
   # ============================================
   # Unit Tests
   # ============================================
   test:
-    name: Tests
+    name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Python
+
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
       - name: Install test dependencies
         run: |
-          pip install pytest pytest-cov numpy scipy scikit-learn pandas opencv-python-headless
-          
-      - name: Run tests
+          pip install --upgrade pip
+          pip install pytest pytest-cov numpy scipy scikit-learn pandas \
+                     opencv-python-headless pyyaml pydantic fastapi httpx
+
+      - name: Run tests with coverage
         run: |
-          pytest tests/ -v --tb=short
-          
-      - name: Upload coverage
-        if: always()
-        uses: codecov/codecov-action@v3
+          pytest tests/ -v --tb=short \
+            --cov=src \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            --junitxml=junit.xml
+
+      - name: Upload coverage report
+        if: always() && matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
         with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: junit.xml
 
   # ============================================
   # Build Docker Image
   # ============================================
-  build:
-    name: Build Docker
+  docker:
+    name: Docker Build
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'release'
+    if: github.event_name == 'push' || github.event_name == 'release'
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        
+
       - name: Log in to Registry
+        if: github.event_name == 'release'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -109,13 +149,14 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=
-            
-      - name: Build and push
+
+      - name: Build (and push on release)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/Dockerfile
-          push: true
+          target: production
+          push: ${{ github.event_name == 'release' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -127,14 +168,13 @@ jobs:
   deploy-staging:
     name: Deploy Staging
     runs-on: ubuntu-latest
-    needs: build
+    needs: docker
     if: github.ref == 'refs/heads/develop'
     environment: staging
     steps:
       - name: Deploy to staging
         run: |
           echo "Deploying to staging environment..."
-          # Add your deployment commands here
           # kubectl apply -f k8s/staging/
 
   # ============================================
@@ -143,12 +183,11 @@ jobs:
   deploy-production:
     name: Deploy Production
     runs-on: ubuntu-latest
-    needs: build
+    needs: docker
     if: github.event_name == 'release'
     environment: production
     steps:
       - name: Deploy to production
         run: |
           echo "Deploying to production environment..."
-          # Add your deployment commands here
           # kubectl apply -f k8s/production/
