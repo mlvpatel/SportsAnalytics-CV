@@ -176,6 +176,7 @@ async def analyze_video(
 async def get_job_status(job_id: str) -> JobStatusResponse:
     """Get the status of an analysis job from Celery backend."""
     from celery.result import AsyncResult
+
     from src.worker import celery_app
 
     task_result = AsyncResult(job_id, app=celery_app)
@@ -237,6 +238,7 @@ async def get_job_status(job_id: str) -> JobStatusResponse:
 async def delete_job(job_id: str) -> dict:
     """Revoke a job or delete its result."""
     from celery.result import AsyncResult
+
     from src.worker import celery_app
 
     task_result = AsyncResult(job_id, app=celery_app)
