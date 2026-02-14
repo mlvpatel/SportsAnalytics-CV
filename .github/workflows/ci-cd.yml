@@ -88,8 +88,8 @@ jobs:
       - name: Install test dependencies
         run: |
           pip install --upgrade pip
-          pip install pytest pytest-cov numpy scipy scikit-learn pandas \
-                     opencv-python-headless pyyaml pydantic fastapi httpx
+          pip install -r requirements.txt
+          pip install pytest pytest-cov httpx
 
       - name: Run tests with coverage
         run: |
