@@ -103,7 +103,14 @@ class Tracker:
         Returns:
             Interpolated ball positions with continuous tracking.
         """
-        ball_bboxes = [x.get(1, {}).get("bbox", []) for x in ball_positions]
+        ball_bboxes = []
+        for x in ball_positions:
+            bbox = x.get(1, {}).get("bbox")
+            if bbox:
+                ball_bboxes.append(bbox)
+            else:
+                ball_bboxes.append([np.nan, np.nan, np.nan, np.nan])
+
         df_ball = pd.DataFrame(ball_bboxes, columns=["x1", "y1", "x2", "y2"])
 
         # Interpolate and backfill missing values

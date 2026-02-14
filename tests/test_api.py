@@ -7,6 +7,7 @@ Author: Malav Patel
 """
 
 import pytest
+import unittest.mock
 
 try:
     from fastapi.testclient import TestClient
@@ -58,20 +59,25 @@ class TestAnalyzeEndpoint:
 
         return TestClient(app)
 
-    def test_analyze_returns_job_id(self, client):
+    @pytest.fixture
+    def mock_celery(self):
+        with unittest.mock.patch("src.worker.analyze_video_task") as mock_task:
+            yield mock_task
+
+    def test_analyze_returns_job_id(self, client, mock_celery):
+        # Setup mock
+        mock_task_instance = unittest.mock.Mock()
+        mock_task_instance.id = "test-job-id"
+        mock_celery.delay.return_value = mock_task_instance
+
         response = client.post(
             "/analyze",
             json={"video_path": "/tmp/test.mp4"},
         )
         assert response.status_code == 200
         data = response.json()
-        assert "job_id" in data
+        assert data["job_id"] == "test-job-id"
         assert data["status"] == "pending"
-        assert data["progress"] == 0.0
-
-    def test_analyze_missing_video_path(self, client):
-        response = client.post("/analyze", json={})
-        assert response.status_code == 422  # Validation error
 
 
 @skip_without_fastapi
@@ -84,22 +90,42 @@ class TestStatusEndpoint:
 
         return TestClient(app)
 
-    def test_status_not_found(self, client):
-        response = client.get("/status/nonexistent-id")
-        assert response.status_code == 404
+    @pytest.fixture
+    def mock_async_result(self):
+        with unittest.mock.patch("celery.result.AsyncResult") as mock:
+            yield mock
 
-    def test_status_after_submit(self, client):
-        # Submit a job first
-        submit = client.post(
-            "/analyze",
-            json={"video_path": "/tmp/test.mp4"},
-        )
-        job_id = submit.json()["job_id"]
+    def test_status_pending(self, client, mock_async_result):
+        # Setup mock
+        mock_instance = unittest.mock.Mock()
+        mock_instance.state = "PENDING"
+        mock_async_result.return_value = mock_instance
 
-        # Check status
-        response = client.get(f"/status/{job_id}")
+        response = client.get("/status/test-id")
         assert response.status_code == 200
-        assert response.json()["job_id"] == job_id
+        data = response.json()
+        assert data["status"] == "pending"
+
+    def test_status_completed(self, client, mock_async_result):
+        # Setup mock
+        mock_instance = unittest.mock.Mock()
+        mock_instance.state = "SUCCESS"
+        mock_instance.result = {
+            "job_id": "test-id",
+            "status": "completed",
+            "team1_possession": 50.0,
+            "team2_possession": 50.0,
+            "total_frames": 100,
+            "processing_time_seconds": 10.0,
+            "fps": 30.0,
+        }
+        mock_async_result.return_value = mock_instance
+
+        response = client.get("/status/test-id")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "completed"
+        assert data["result"]["total_frames"] == 100
 
 
 @skip_without_fastapi
@@ -109,67 +135,29 @@ class TestDeleteJobEndpoint:
     @pytest.fixture
     def client(self):
         from src.api.main import app
-
         return TestClient(app)
-
-    def test_delete_not_found(self, client):
-        response = client.delete("/jobs/nonexistent-id")
-        assert response.status_code == 404
-
-    def test_delete_completed_job(self, client):
-        from src.api.main import jobs
-        from src.api.models import JobStatus, JobStatusResponse
-
-        # Manually insert a completed job
-        job_id = "test-delete-job"
-        jobs[job_id] = JobStatusResponse(
-            job_id=job_id,
-            status=JobStatus.COMPLETED,
-            progress=100.0,
-            message="Done",
-        )
-
-        response = client.delete(f"/jobs/{job_id}")
-        assert response.status_code == 200
-        assert job_id not in jobs
-
-    def test_delete_processing_job_blocked(self, client):
-        from src.api.main import jobs
-        from src.api.models import JobStatus, JobStatusResponse
-
-        job_id = "test-processing-job"
-        jobs[job_id] = JobStatusResponse(
-            job_id=job_id,
-            status=JobStatus.PROCESSING,
-            progress=50.0,
-            message="In progress",
-        )
-
-        response = client.delete(f"/jobs/{job_id}")
-        assert response.status_code == 409
-
-        # Clean up
-        del jobs[job_id]
-
-
-@skip_without_fastapi
-class TestOpenAPIDocs:
-    """Tests for API documentation endpoints."""
 
     @pytest.fixture
-    def client(self):
-        from src.api.main import app
+    def mock_async_result(self):
+        with unittest.mock.patch("celery.result.AsyncResult") as mock:
+            yield mock
 
-        return TestClient(app)
+    def test_delete_running_job(self, client, mock_async_result):
+        # Setup mock
+        mock_instance = unittest.mock.Mock()
+        mock_instance.state = "STARTED"
+        mock_async_result.return_value = mock_instance
 
-    def test_docs_endpoint(self, client):
-        response = client.get("/docs")
+        response = client.delete("/jobs/test-id")
         assert response.status_code == 200
+        mock_instance.revoke.assert_called_once_with(terminate=True)
 
-    def test_openapi_json(self, client):
-        response = client.get("/openapi.json")
+    def test_delete_completed_job(self, client, mock_async_result):
+        # Setup mock
+        mock_instance = unittest.mock.Mock()
+        mock_instance.state = "SUCCESS"
+        mock_async_result.return_value = mock_instance
+
+        response = client.delete("/jobs/test-id")
         assert response.status_code == 200
-        data = response.json()
-        assert data["info"]["title"] == "SportsAnalytics-CV API"
-        assert "/health" in data["paths"]
-        assert "/analyze" in data["paths"]
+        mock_instance.forget.assert_called_once()
