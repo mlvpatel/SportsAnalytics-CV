@@ -32,6 +32,8 @@ services:
       - API_KEY=${API_KEY:-}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8501}
       - RATE_LIMIT_RPM=${RATE_LIMIT_RPM:-60}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     deploy:
       resources:
         reservations:
@@ -44,6 +46,39 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - sportsanalytics-network
+
+  # ============================================
+  # Celery Worker Service
+  # ============================================
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    image: sportsanalytics-cv:latest
+    container_name: sportsanalytics-worker
+    restart: unless-stopped
+    command: [ "celery", "-A", "src.worker.celery_app", "worker", "--loglevel=info" ]
+    volumes:
+      - ../data:/app/data
+      - ../models:/app/models:ro
+      - ../logs:/app/logs
+    environment:
+      - DEVICE=cuda
+      - LOG_LEVEL=INFO
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    depends_on:
+      - redis
     networks:
       - sportsanalytics-network
 
@@ -72,7 +107,7 @@ services:
       - sportsanalytics-network
 
   # ============================================
-  # Redis Cache (Optional)
+  # Redis Cache (Required for Celery)
   # ============================================
   redis:
     image: redis:7-alpine

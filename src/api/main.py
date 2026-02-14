@@ -16,11 +16,10 @@ Author: Malav Patel
 import logging
 import os
 import time
-import uuid
 from collections import defaultdict
 from typing import Dict, Optional
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
@@ -131,61 +130,6 @@ async def verify_api_key(api_key: Optional[str] = Depends(_api_key_header)):
         raise HTTPException(status_code=403, detail="Invalid or missing API key")
 
 
-# ---------------------------------------------------------------------------
-# In-memory job store
-# ---------------------------------------------------------------------------
-jobs: Dict[str, JobStatusResponse] = {}
-
-
-# ---------------------------------------------------------------------------
-# Background task
-# ---------------------------------------------------------------------------
-def _run_analysis(job_id: str, request: AnalysisRequest) -> None:
-    """
-    Run video analysis as a background task.
-
-    Args:
-        job_id: Unique job identifier.
-        request: Analysis request parameters.
-    """
-    try:
-        jobs[job_id].status = JobStatus.PROCESSING
-        jobs[job_id].message = "Analysis in progress"
-
-        from main import SportsAnalyzer
-
-        analyzer = SportsAnalyzer()
-        result = analyzer.analyze(
-            video_path=request.video_path,
-            output_path=request.output_path,
-            use_stubs=request.use_stubs,
-            export_stats=request.export_stats,
-        )
-
-        jobs[job_id].status = JobStatus.COMPLETED
-        jobs[job_id].progress = 100.0
-        jobs[job_id].message = "Analysis completed successfully"
-        jobs[job_id].result = AnalysisResponse(
-            job_id=job_id,
-            status=JobStatus.COMPLETED,
-            team1_possession=result.team1_possession,
-            team2_possession=result.team2_possession,
-            total_frames=result.total_frames,
-            processing_time_seconds=result.processing_time,
-            fps=result.fps,
-        )
-
-        logger.info(f"Job {job_id} completed successfully")
-
-    except Exception as e:
-        logger.error(f"Job {job_id} failed: {e}")
-        jobs[job_id].status = JobStatus.FAILED
-        jobs[job_id].message = str(e)
-
-
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
 @app.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
     """Check API health, GPU availability, and model status."""
@@ -200,48 +144,108 @@ async def health_check() -> HealthResponse:
 @app.post("/analyze", response_model=JobStatusResponse, dependencies=[Depends(verify_api_key)])
 async def analyze_video(
     request: AnalysisRequest,
-    background_tasks: BackgroundTasks,
 ) -> JobStatusResponse:
     """
     Submit a video for analysis.
 
     Requires API key if API_KEY env var is set.
     """
-    job_id = str(uuid.uuid4())
+    # Import locally to avoid top-level circular imports if any
+    from src.worker import analyze_video_task
 
-    job_status = JobStatusResponse(
+    # Submit task to Celery
+    task = analyze_video_task.delay(
+        video_path=request.video_path,
+        output_path=request.output_path,
+        use_stubs=request.use_stubs,
+        export_stats=request.export_stats,
+    )
+
+    job_id = task.id
+    logger.info(f"Job {job_id} submitted for {request.video_path}")
+
+    return JobStatusResponse(
         job_id=job_id,
         status=JobStatus.PENDING,
         progress=0.0,
-        message="Job submitted",
+        message="Job submitted to queue",
     )
-    jobs[job_id] = job_status
-
-    background_tasks.add_task(_run_analysis, job_id, request)
-    logger.info(f"Job {job_id} submitted for {request.video_path}")
-
-    return job_status
 
 
 @app.get("/status/{job_id}", response_model=JobStatusResponse)
 async def get_job_status(job_id: str) -> JobStatusResponse:
-    """Get the status of an analysis job."""
-    if job_id not in jobs:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
-    return jobs[job_id]
+    """Get the status of an analysis job from Celery backend."""
+    from celery.result import AsyncResult
+    from src.worker import celery_app
+
+    task_result = AsyncResult(job_id, app=celery_app)
+
+    # Map Celery state to JobStatus
+    state = task_result.state
+    status = JobStatus.PENDING
+    progress = 0.0
+    message = ""
+    result_data = None
+
+    if state == "PENDING":
+        status = JobStatus.PENDING
+        message = "Job is waiting in queue..."
+    elif state == "STARTED":
+        status = JobStatus.PROCESSING
+        # Extract meta info if available (we set this in worker)
+        if isinstance(task_result.info, dict):
+            progress = task_result.info.get("progress", 0.0)
+            message = task_result.info.get("message", "Processing...")
+        else:
+            message = "Processing..."
+    elif state == "SUCCESS":
+        status = JobStatus.COMPLETED
+        progress = 100.0
+        message = "Analysis completed successfully"
+        # task_result.result is the return value of the task (in dist)
+        # It should be a dict matching AnalysisResponse
+        # However, AsyncResult.result might be the exception if failed,
+        # but state check handles that.
+        result_content = task_result.result
+        if isinstance(result_content, dict):
+            # Ensure the dict matches AnalysisResponse structure
+            # (It should, as we return model_dump() in worker)
+            # We can try to parse it to be safe or return as is if valid
+            try:
+                result_data = AnalysisResponse(**result_content)
+            except Exception as e:
+                logger.error(f"Failed to parse result for {job_id}: {e}")
+                message = "Result parsing error"
+                status = JobStatus.FAILED
+    elif state in ["FAILURE", "REVOKED"]:
+        status = JobStatus.FAILED
+        message = str(task_result.result) if task_result.result else "Job failed"
+    elif state == "RETRY":
+        status = JobStatus.PROCESSING
+        message = "Retrying..."
+
+    return JobStatusResponse(
+        job_id=job_id,
+        status=status,
+        progress=progress,
+        message=message,
+        result=result_data,
+    )
 
 
 @app.delete("/jobs/{job_id}", dependencies=[Depends(verify_api_key)])
 async def delete_job(job_id: str) -> dict:
-    """Delete a completed or failed job from memory."""
-    if job_id not in jobs:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    """Revoke a job or delete its result."""
+    from celery.result import AsyncResult
+    from src.worker import celery_app
 
-    if jobs[job_id].status == JobStatus.PROCESSING:
-        raise HTTPException(
-            status_code=409,
-            detail="Cannot delete a job that is still processing",
-        )
+    task_result = AsyncResult(job_id, app=celery_app)
 
-    del jobs[job_id]
-    return {"message": f"Job {job_id} deleted"}
+    # If it's running, revoke it
+    if task_result.state in ["PENDING", "STARTED", "RETRY"]:
+        task_result.revoke(terminate=True)
+        return {"message": f"Job {job_id} revoked"}
+
+    # If it's done, forget it (clears from backend)
+    task_result.forget()
+    return {"message": f"Job {job_id} result deleted"}
