@@ -6,8 +6,9 @@ Uses FastAPI's TestClient for synchronous endpoint testing.
 Author: Malav Patel
 """
 
-import pytest
 import unittest.mock
+
+import pytest
 
 try:
     from fastapi.testclient import TestClient
