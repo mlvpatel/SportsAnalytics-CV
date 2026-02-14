@@ -135,6 +135,7 @@ class TestDeleteJobEndpoint:
     @pytest.fixture
     def client(self):
         from src.api.main import app
+
         return TestClient(app)
 
     @pytest.fixture
