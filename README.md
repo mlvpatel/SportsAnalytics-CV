@@ -171,32 +171,31 @@ flowchart TD
 ```mermaid
 mindmap
   root((SportsAnalytics-CV))
-    Computer_Vision:::dark
+    Computer_Vision
       YOLOv8 / YOLOv11
       OpenCV Headless
       Supervision
-    Machine_Learning:::dark
+    Machine_Learning
       PyTorch
       Scikit-learn
       NumPy / Pandas
-    Backend_Services:::dark
+    Backend_Services
       FastAPI / Uvicorn
       Celery Distributed
       Redis Cache
-    Frontend_UI:::dark
+    Frontend_UI
       Streamlit
       Plotly
-    DevOps_Infra:::dark
+    DevOps_Infra
       Docker Compose
       GitHub Actions
       Prometheus
       Grafana
-    Code_Quality:::dark
+    Code_Quality
       Pytest
       Black
       Flake8
       Isort
-  classDef dark fill:#333,stroke:#fff,stroke-width:2px,color:white
 ```
 
 ---
