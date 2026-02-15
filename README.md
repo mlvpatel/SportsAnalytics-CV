@@ -132,21 +132,17 @@ flowchart TD
         REDIS["Redis\nJob Queue"] :::docker
         WORKER["Worker\nCelery"] :::docker
         UI["Streamlit\n:8501"] :::docker
-        PROM["Prometheus\n:9090"] :::docker
-        GRAF["Grafana\n:3000"] :::docker
 
         API --> REDIS
         WORKER --> REDIS
         UI --> API
-        PROM --> API
-        GRAF --> PROM
     end
 
     subgraph CI["GitHub Actions CI/CD"]
         style CI fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
         LINT["Lint\nblack · flake8 · isort"] :::ci --> TEST
-        TEST["Test Matrix\nPython 3.10–3.12"] :::ci --> SEC
-        SEC["Security\npip-audit · CodeQL"] :::ci --> BUILD
+        TEST["Test Matrix\nPython 3.10–3.12"] :::ci --> BUILD
+        SEC["Security\npip-audit · CodeQL"] :::ci
         BUILD["Docker Build\n& Push"] :::ci
     end
 
