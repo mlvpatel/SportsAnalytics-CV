@@ -128,10 +128,10 @@ flowchart TD
 flowchart TD
     subgraph DOCKER["Docker Compose"]
         style DOCKER fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-        API["FastAPI\n:8000"] :::docker
-        REDIS["Redis\nJob Queue"] :::docker
-        WORKER["Worker\nCelery"] :::docker
-        UI["Streamlit\n:8501"] :::docker
+        API["FastAPI\n:8000"]:::docker
+        REDIS["Redis\nJob Queue"]:::docker
+        WORKER["Worker\nCelery"]:::docker
+        UI["Streamlit\n:8501"]:::docker
 
         API --> REDIS
         WORKER --> REDIS
@@ -140,10 +140,10 @@ flowchart TD
 
     subgraph CI["GitHub Actions CI/CD"]
         style CI fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-        LINT["Lint\nblack · flake8 · isort"] :::ci --> TEST
-        TEST["Test Matrix\nPython 3.10–3.12"] :::ci --> BUILD
-        SEC["Security\npip-audit · CodeQL"] :::ci
-        BUILD["Docker Build\n& Push"] :::ci
+        LINT["Lint\nblack · flake8 · isort"]:::ci --> TEST
+        TEST["Test Matrix\nPython 3.10–3.12"]:::ci --> BUILD
+        SEC["Security\npip-audit · CodeQL"]:::ci
+        BUILD["Docker Build\n& Push"]:::ci
     end
 
     DEV["Developer"] -->|"git push"| CI
