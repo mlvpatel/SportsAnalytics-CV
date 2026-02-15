@@ -126,89 +126,77 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    subgraph DOCKER["Docker Compose"]
-        style DOCKER fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-        API["FastAPI\n:8000"]:::docker
-        REDIS["Redis\nJob Queue"]:::docker
-        WORKER["Worker\nCelery"]:::docker
-        UI["Streamlit\n:8501"]:::docker
+    %% Define Styles
+    classDef service fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:black
+    classDef db fill:#ffebee,stroke:#b71c1c,stroke-width:2px,color:black
+    classDef worker fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:black
+    classDef monitor fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:black
 
-        API --> REDIS
-        WORKER --> REDIS
-        UI --> API
+    subgraph DOCKER[Docker Deployment Environment]
+        direction TB
+        
+        %% Frontend Service
+        UI[Streamlit App\n:8501]:::service 
+        
+        %% Backend Core
+        API[FastAPI Service\n:8000]:::service
+        
+        %% Data & Processing Layer
+        REDIS[(Redis Broker\n:6379)]:::db
+        WORKER(Celery Worker\nAsync Process):::worker
+        
+        %% Observability Stack
+        PROM[Prometheus\n:9090]:::monitor
+        GRAF[Grafana\n:3000]:::monitor
+        
+        %% Connections
+        UI -->|HTTP Requests| API
+        API -->|Submit Job| REDIS
+        WORKER -->|Consume Job| REDIS
+        WORKER -.->|Save Results| REDIS
+        
+        %% Monitoring Flow
+        PROM -.->|Scrape Metrics| API
+        GRAF -->|Query Data| PROM
     end
 
-    subgraph CI["GitHub Actions CI/CD"]
-        style CI fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-        LINT["Lint\nblack · flake8 · isort"]:::ci --> TEST
-        TEST["Test Matrix\nPython 3.10–3.12"]:::ci --> BUILD
-        SEC["Security\npip-audit · CodeQL"]:::ci
-        BUILD["Docker Build\n& Push"]:::ci
-    end
-
-    DEV["Developer"] -->|"git push"| CI
-    CI -->|"deploy"| DOCKER
-    CLIENT["Client / Browser"] --> UI
-    CLIENT --> API
-
-    classDef docker fill:#b3e5fc,stroke:#0277bd,stroke-width:1px,color:black;
-    classDef ci fill:#e1bee7,stroke:#7b1fa2,stroke-width:1px,color:black;
+    %% External Access
+    USER([User / Browser])
+    USER -->|Access UI| UI
+    USER -->|Direct API| API
 ```
 
 ### Tech Stack
 
-graph TD
-    %% Define Styles for Bright Neon Colors
-    classDef cv fill:#00FFFF,stroke:#008B8B,stroke-width:2px,color:black,font-weight:bold;
-    classDef ml fill:#7FFF00,stroke:#006400,stroke-width:2px,color:black,font-weight:bold;
-    classDef api fill:#FFD700,stroke:#B8860B,stroke-width:2px,color:black,font-weight:bold;
-    classDef devops fill:#FF1493,stroke:#8B0000,stroke-width:2px,color:white,font-weight:bold;
-    classDef quality fill:#FF4500,stroke:#8B0000,stroke-width:2px,color:white,font-weight:bold;
-    classDef root fill:#FFFFFF,stroke:#000000,stroke-width:4px,color:black,font-size:18px;
-
-    ROOT((SportsAnalytics-CV)):::root
-
-    subgraph CV_G[Computer Vision]
-        direction TB
-        YOLO[YOLO v8/v11]:::cv
-        OCV[OpenCV]:::cv
-        BT[ByteTrack]:::cv
-    end
-
-    subgraph ML_G[Machine Learning]
-        direction TB
-        PT[PyTorch]:::ml
-        SL[scikit-learn]:::ml
-        NP[NumPy]:::ml
-    end
-
-    subgraph WEB_G[API & UI]
-        direction TB
-        FAST[FastAPI]:::api
-        STR[Streamlit]:::api
-        PYD[Pydantic]:::api
-    end
-
-    subgraph OPS_G[DevOps]
-        direction TB
-        DOC[Docker]:::devops
-        GHA[GitHub Actions]:::devops
-        DEP[Dependabot]:::devops
-    end
-
-    subgraph QA_G[Quality]
-        direction TB
-        PYT[pytest]:::quality
-        BLK[black]:::quality
-        FLK[flake8]:::quality
-        CQL[CodeQL]:::quality
-    end
-
-    ROOT --- CV_G
-    ROOT --- ML_G
-    ROOT --- WEB_G
-    ROOT --- OPS_G
-    ROOT --- QA_G
+```mermaid
+mindmap
+  root((SportsAnalytics-CV))
+    Computer_Vision
+      YOLOv8 / YOLOv11
+      OpenCV Headless
+      Supervision
+    Machine_Learning
+      PyTorch
+      Scikit-learn
+      NumPy / Pandas
+    Backend_Services
+      FastAPI / Uvicorn
+      Celery Distributed
+      Redis Cache
+    Frontend_UI
+      Streamlit
+      Plotly
+    DevOps_Infra
+      Docker Compose
+      GitHub Actions
+      Prometheus
+      Grafana
+    Code_Quality
+      Pytest
+      Black
+      Flake8
+      Isort
+```
 
 ---
 
