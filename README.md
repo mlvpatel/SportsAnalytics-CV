@@ -128,6 +128,7 @@ flowchart TD
 flowchart TD
     subgraph DOCKER["Docker Compose"]
         API["FastAPI\n:8000"] --> REDIS["Redis\nJob Queue"]
+        WORKER["Worker\nCelery"] --> REDIS
         UI["Streamlit\n:8501"] --> API
         PROM["Prometheus\n:9090"] --> API
         GRAF["Grafana\n:3000"] --> PROM
@@ -401,7 +402,8 @@ SportsAnalytics-CV/
 │   ├── view_transformer/         # Perspective transform
 │   ├── speed_distance/           # Speed & distance estimation
 │   ├── utils/                    # Config, video I/O, bbox helpers
-│   └── api/                      # FastAPI REST backend
+│   ├── api/                      # FastAPI REST backend
+│   └── worker.py                 # Celery worker entry point
 ├── tests/                        # 71+ unit tests (pytest)
 ├── docker/                       # Dockerfile & docker-compose.yml
 ├── .github/                      # CI/CD, Dependabot, CodeQL, templates
