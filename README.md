@@ -170,7 +170,6 @@ flowchart TD
 
 ```mermaid
 mindmap
-  classDef dark fill:#333,stroke:#fff,stroke-width:2px,color:white
   root((SportsAnalytics-CV))
     Computer_Vision:::dark
       YOLOv8 / YOLOv11
@@ -197,6 +196,7 @@ mindmap
       Black
       Flake8
       Isort
+  classDef dark fill:#333,stroke:#fff,stroke-width:2px,color:white
 ```
 
 ---
